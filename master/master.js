@@ -40,8 +40,14 @@ router.get("/get-data",async(req,res)=>{
     
     const freePorts=await sendRequests(ports)
     assignFilesToWorkers(freePorts)
-    console.log(workerToFiles)
-
+    const mappingWorkerPorts=Object.keys(workerToFiles)
+    mappingWorkerPorts.forEach(async(port)=>{
+        const requestURL=`http://localhost:${port}/worker/mapping`
+        const JSONObject={"data":workerToFiles[port]}
+        const {data} = await axios.post(requestURL,JSONObject)
+        console.log(data.data)
+        
+    })
 })
 
 module.exports=router
