@@ -1,7 +1,7 @@
 const mapper = require('./map')
 const reducer = require('./reduce')
 
-let text = ["Hello this is a test for the map function to check if it works fine hello again", "this is a test for the map function"]
+filePath = ["../files/testData.txt"]
 
 const sendToMapper = async(texts)=>{
     const data = await Promise.all(texts.map(async (text)=>{
@@ -13,13 +13,11 @@ const sendToMapper = async(texts)=>{
     return data
 }
 
-const mapAndReduce = async(text) => {
+const mapAndReduce = async(text, callback) => {
     let mapperResult = await sendToMapper(text)
 
-    //idk how to make reducer wait for mapper to finish 
-    // but if run after complete execution of mapper gives proper result
-    let reducerResult = reducer()
+    let reducerResult = callback(mapperResult[0])
     console.log(reducerResult)
 }
 
-mapAndReduce(text)
+mapAndReduce(filePath, reducer)
