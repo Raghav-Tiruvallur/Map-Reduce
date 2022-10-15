@@ -41,13 +41,22 @@ router.get("/get-data",async(req,res)=>{
     const freePorts=await sendRequests(ports)
     assignFilesToWorkers(freePorts)
     const mappingWorkerPorts=Object.keys(workerToFiles)
-    mappingWorkerPorts.forEach(async(port)=>{
+    const data=await Promise.all(mappingWorkerPorts.map(async(port)=>{
         const requestURL=`http://localhost:${port}/worker/mapping`
         const JSONObject={"data":workerToFiles[port]}
         const {data} = await axios.post(requestURL,JSONObject)
-        console.log(data.data)
+        if(data && data.data === "mapping done")
+        {
+            return data.data
+        }
         
     })
+    )
+    //master has got news that the mapping is done in all the mapping workers and written to local files
+    //from there send to reducer 
+    //reducer will write to files locally
+    //yeah then basic shit is done
+    
 })
 
 module.exports=router
