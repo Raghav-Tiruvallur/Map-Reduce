@@ -6,9 +6,12 @@ const fs = require('fs')
 const reducer = (filePaths) => {
     
     let result = []
-
     for(file of filePaths.values()){
-        let fileName = file.split("\\").pop()
+        let fileName
+        if(process.platform === "win32")
+            fileName = file.split("//").pop()
+        else 
+        fileName = file.split("/").pop()
         keyValue = readFromFile(fileName).split(" ")
         keyValue.pop()
         
@@ -31,20 +34,40 @@ const reducer = (filePaths) => {
 //input: path of the file to be read
 //output: content of file
 const readFromFile = (file) =>{
-    dirName = __dirname.split('\\')
-    dirName.pop()
-    const fileName = dirName.join("\\") + "\\mapFiles\\"+ file
+    if(process.platform === "win32")
+    {
+        dirName = __dirname.split('\\')
+        dirName.pop()
+        const fileName = dirName.join("\\") + "\\mapFiles\\"+ file
 
-    let keyValuePair
+        let keyValuePair
 
-    try{
-        keyValuePair = fs.readFileSync(fileName, { encoding: 'utf8' })
+        try{
+            keyValuePair = fs.readFileSync(fileName, { encoding: 'utf8' })
+        }
+        catch(err){
+            console.log("Error while reading file"+{fileName})
+        }
+
+        return keyValuePair
     }
-    catch(err){
-        console.log("Error while reading file"+{fileName})
-    }
+    else 
+    {
+        dirName = __dirname.split('/')
+        dirName.pop()
+        const fileName = dirName.join("/") + "/mapFiles/"+ file
 
-    return keyValuePair
+        let keyValuePair
+
+        try{
+            keyValuePair = fs.readFileSync(fileName, { encoding: 'utf8' })
+        }
+        catch(err){
+            console.log("Error while reading file"+{fileName})
+        }
+
+        return keyValuePair
+    }
 } 
 
 module.exports = reducer

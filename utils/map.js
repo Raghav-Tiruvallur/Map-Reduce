@@ -65,19 +65,37 @@ const sortObject = (object) =>{
 //output: path of the file that is generated
 const writeToFile = (word) =>{
 
-    dirName = __dirname.split('\\')
-    dirName.pop()
-    const fileName = dirName.join("\\") + "\\mapFiles\\"+ word[0] +".txt"
+    if(process.platform === "win32")
+    {
+        dirName = __dirname.split('\\')
+        dirName.pop()
+        const fileName = dirName.join("\\") + "\\mapFiles\\"+ word[0] +".txt"
+        try{
+            fs.appendFileSync(fileName, word.toString()+" ")
+        }
+        catch (err){
+            console.log("Error while writing to file"+{fileName})
+            throw err
+        }
 
-    try{
-        fs.appendFileSync(fileName, word.toString()+" ")
+        return fileName
     }
-    catch (err){
-        console.log("Error while writing to file"+{fileName})
-        throw err
-    }
+    else 
+    {
+        dirName = __dirname.split('/')
+        dirName.pop()
+        const fileName = dirName.join("/") + "/mapFiles/"+ word[0] +".txt"
+        console.log(fileName)
+        try{
+            fs.appendFileSync(fileName, word.toString()+" ")
+        }
+        catch (err){
+            console.log("Error while writing to file"+{fileName})
+            throw err
+        }
 
-    return fileName
+        return fileName
+    }
 }
 
 module.exports = mapper

@@ -22,7 +22,7 @@ const splitFilesIntoParts=(chunkSize)=>{
 const main=()=>{
 
     const chunkSize=1024
-    splitFilesIntoParts(chunkSize)
+   splitFilesIntoParts(chunkSize)
 
 }
 main()

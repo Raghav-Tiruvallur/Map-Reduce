@@ -25,6 +25,13 @@ router.post("/mapping",(req,res)=>{
         res.status(500).json({"data":e})
     }
 })
+const delay = ms => new Promise(res => setTimeout(res, ms));
+router.post("/reducer",async(req,res)=>{
+    const files=req.body.data 
+    console.log(files)
+    await delay(5000)
+    console.log("hello")
+})
 
 
 
