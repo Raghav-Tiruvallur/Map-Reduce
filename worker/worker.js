@@ -25,6 +25,13 @@ router.post("/mapping",(req,res)=>{
         res.status(500).json({"data":e})
     }
 })
+
+router.get("/heartbeat",(req,res)=>{
+    console.log("hello")
+    res.status(200).send({"data":"i am alive"})
+})
+
+
 const delay = ms => new Promise(res => setTimeout(res, ms));
 router.post("/reducer",async(req,res)=>{
     const files=req.body.data 

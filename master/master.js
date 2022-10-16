@@ -6,6 +6,7 @@ const files=fs.readdirSync('../files')
 const numberOfFiles = files.length
 var workerToFiles={}
 var reducerWorkerToFiles={}
+const ports=[WORKER1_PORT,WORKER2_PORT,WORKER3_PORT,WORKER4_PORT,WORKER5_PORT]
 const assignFilesToWorkers=(ports)=>{
     let numberOfWorkers;
     if(ports.length < 3)
@@ -49,8 +50,11 @@ const assignReducerWorkersToFiles=(reducerWorkers,files)=>{
 }
 
 
+
+
+
 router.get("/get-data",async(req,res)=>{
-    const ports=[WORKER1_PORT,WORKER2_PORT,WORKER3_PORT,WORKER4_PORT,WORKER5_PORT]
+   
     
     const freePorts=await sendRequests(ports)
     assignFilesToWorkers(freePorts)
