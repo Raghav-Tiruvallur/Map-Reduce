@@ -4,28 +4,18 @@ const fs = require('fs')
 //input: all the file paths that are created during the mapping phase
 //output: either the key and total frequncy to a file or returns the entire reduced output
 const reducer = (filePaths) => {
-    
-    let result = []
-    for(file of filePaths.values()){
-        let fileName
-        if(process.platform === "win32")
-            fileName = file.split("//").pop()
-        else 
-        fileName = file.split("/").pop()
-        keyValue = readFromFile(fileName).split(" ")
-        keyValue.pop()
-        
-        let wordCount = 0
-        let key, value
 
-        for(let i=0; i<keyValue.length; i++){
-            key = keyValue[i].split(",")[0]
-            value = parseInt(keyValue[i].split(",")[1])
-            wordCount+=value
-        }
-        
-        result.push([key, wordCount])
+    keyValue = readFromFile(filePaths)
+    
+    let wordCount = 0
+    let key = keyValue[0].split(",")[0]
+
+    for(let i=0; i<keyValue.length-1; i++){
+        value = parseInt(keyValue[i].split(",")[1])
+        wordCount+=value
     }
+    
+    let result = [key, wordCount]
 
     return result
 }
@@ -33,40 +23,32 @@ const reducer = (filePaths) => {
 //read content of the file
 //input: path of the file to be read
 //output: content of file
-const readFromFile = (file) =>{
+const readFromFile = (filePath) =>{
     if(process.platform === "win32")
     {
-        dirName = __dirname.split('\\')
-        dirName.pop()
-        const fileName = dirName.join("\\") + "\\mapFiles\\"+ file
-
-        let keyValuePair
+        fileName = filePath.split('\\').pop()
 
         try{
-            keyValuePair = fs.readFileSync(fileName, { encoding: 'utf8' })
+            fileContent = fs.readFileSync(filePath, { encoding: 'utf8' })
         }
         catch(err){
-            console.log("Error while reading file"+{fileName})
+            console.log("Error while reading file"+{filePath})
         }
 
-        return keyValuePair
+        return fileContent.split("\n")
     }
     else 
     {
-        dirName = __dirname.split('/')
-        dirName.pop()
-        const fileName = dirName.join("/") + "/mapFiles/"+ file
-
-        let keyValuePair
+        fileName = filePath.split('/').pop()
 
         try{
-            keyValuePair = fs.readFileSync(fileName, { encoding: 'utf8' })
+            fileContent = fs.readFileSync(filePath, { encoding: 'utf8' })
         }
         catch(err){
-            console.log("Error while reading file"+{fileName})
+            console.log("Error while reading file"+{filePath})
         }
 
-        return keyValuePair
+        return fileContent.split("\n")
     }
 } 
 
