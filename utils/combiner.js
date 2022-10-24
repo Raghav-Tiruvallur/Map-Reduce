@@ -1,17 +1,14 @@
 const fs = require('fs')
-const { object } = require('underscore')
 
 const combiner = (filePaths) =>{
 
     let newFiles = []
 
-    for(let i=0; i<filePaths.length; i++){
-        fileContent = readFromFile(filePaths[i])
+    fileContent = readFromFile(filePaths)
 
-        for (let key in fileContent) {
-            file = writeToFile([key, fileContent[key]])
-            newFiles.push(file)
-        }
+    for (let key in fileContent) {
+        file = writeToFile([key, fileContent[key]])
+        newFiles.push(file)
     }
 
     return newFiles
@@ -41,7 +38,7 @@ const writeToFile = (keyValuePair) => {
     {
         dirName = __dirname.split('/')
         dirName.pop()
-        fileName = file.split('/').pop()
+        //fileName = file.split('/').pop()
         
         const filePath = dirName.join("/") + "/sortedFiles/"+ key +".txt" 
         try{

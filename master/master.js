@@ -5,6 +5,7 @@ const fs = require('fs')
 const files=fs.readdirSync('../files')
 const numberOfFiles = files.length
 var workerToFiles={}
+var reducerWorkerToFilesSorting={}
 var reducerWorkerToFiles={}
 const ports=[WORKER1_PORT,WORKER2_PORT,WORKER3_PORT,WORKER4_PORT,WORKER5_PORT]
 const assignFilesToWorkers=(ports)=>{
@@ -37,19 +38,18 @@ const sendRequests=async(ports)=>{
     
 }
 
-const assignReducerWorkersToFiles=(reducerWorkers,files)=>{
+const assignReducerWorkersToFiles=(reducerWorkers,files,reducerWorkerToFileMapping)=>{
     const numberOfReducerWorkers=reducerWorkers.length
     const numberOfFiles=files.length
     const numberOfFilesPerReducerWorker=Math.ceil(numberOfFiles / numberOfReducerWorkers)
+    console.log(numberOfFilesPerReducerWorker)
     let i=0;
     reducerWorkers.forEach((reducerWorker)=>{
         const filesForWorker=files.slice(i,i + numberOfFilesPerReducerWorker)
-        reducerWorkerToFiles[reducerWorker]=filesForWorker
+        reducerWorkerToFileMapping[reducerWorker]=filesForWorker
         i+=numberOfFilesPerReducerWorker
     })
 }
-
-
 
 
 
@@ -59,33 +59,31 @@ router.get("/get-data",async(req,res)=>{
     const freePorts=await sendRequests(ports)
     assignFilesToWorkers(freePorts)
     const mappingWorkerPorts=Object.keys(workerToFiles)
-    await Promise.all(mappingWorkerPorts.map(async(port)=>{
+    const filePathsFromMapperUnFlattened=await Promise.all(mappingWorkerPorts.map(async(port)=>{
         const requestURL=`http://localhost:${port}/worker/mapping`
         const JSONObject={"data":workerToFiles[port]}
         const {data} = await axios.post(requestURL,JSONObject)
-        if(data && data.data === "mapping done")
-        {
-            return data.data
-        }
+        return data.data
         
     })
     )
+    const filePathsFromMapper=filePathsFromMapperUnFlattened.flat(1)
     const otherWorkers=ports.filter((port)=> !mappingWorkerPorts.includes(port))
-    const filesToBeSent=fs.readdirSync('../mapFiles')
-    assignReducerWorkersToFiles(otherWorkers,filesToBeSent)
-    console.log(otherWorkers)
-    await Promise.all(otherWorkers.map((workerPort)=>{
-        const filesToBeSentToReducer={"data":reducerWorkerToFiles[workerPort]}
-        const {data}=axios.post(`http://localhost:${workerPort}/worker/reducer`,filesToBeSentToReducer)
-        if(data && data.data === "reducing done")
-        {
-            return data.data
-        }
+    assignReducerWorkersToFiles(otherWorkers,filePathsFromMapper,reducerWorkerToFilesSorting)
+    let filePathsSortedFilesUnFlattened=await Promise.all(otherWorkers.map(async(workerPort)=>{
+        const filesToBeSentToReducerSorting={"data":reducerWorkerToFilesSorting[workerPort]}
+        return axios.post(`http://localhost:${workerPort}/worker/sorter`,filesToBeSentToReducerSorting)
     }))
-    //master has got news that the mapping is done in all the mapping workers and written to local files
-    //from there send to reducer 
-    //reducer will write to files locally
-    //yeah then basic shit is done
+    filePathsSortedFilesUnFlattened=filePathsSortedFilesUnFlattened.map(({data})=>data.data)
+    const filePathsSortedFilesWithDuplicates=filePathsSortedFilesUnFlattened.flat(1)
+    const filePathsSortedFiles=[... new Set(filePathsSortedFilesWithDuplicates)]
+    assignReducerWorkersToFiles(otherWorkers,filePathsSortedFiles,reducerWorkerToFiles)
+    await Promise.all(otherWorkers.map(async(worker)=>{
+        const filesToBeSentToReducer={"data":reducerWorkerToFiles[worker]}
+        const {data}=await axios.post(`http://localhost:${worker}/worker/reducer`,filesToBeSentToReducer)
+        return data.data
+    }))
+    res.status(200).json({"data":"it's done"})
     
 })
 

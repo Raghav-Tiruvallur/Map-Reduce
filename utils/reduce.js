@@ -15,9 +15,8 @@ const reducer = (filePaths) => {
         wordCount+=value
     }
     
-    let result = [key, wordCount]
-
-    return result
+    data=`${key},${wordCount}`
+    writeToFile(data)
 }
 
 //read content of the file
@@ -51,5 +50,42 @@ const readFromFile = (filePath) =>{
         return fileContent.split("\n")
     }
 } 
+
+const writeToFile = (keyValuePair) => {
+    
+    if(process.platform === "win32"){
+        dirName = __dirname.split('\\')
+        dirName.pop()
+
+        const filePath = dirName.join("\\") + "\\reduced\\reduced.txt"
+        try{
+            fs.appendFileSync(filePath, keyValuePair.toString()+"\n")
+        }
+        catch (err){
+            console.log("Error while writing to file"+{filePath})
+            throw err
+        }
+
+        return filePath
+    }
+    else 
+    {
+        dirName = __dirname.split('/')
+        dirName.pop()
+        //fileName = file.split('/').pop()
+        
+        const filePath = dirName.join("/") + "/reduced/reduced.txt" 
+        try{
+            fs.appendFileSync(filePath, keyValuePair.toString()+"\n")
+        }
+        catch (err){
+            console.log("Error while writing to file"+{filePath})
+            throw err
+        }
+
+        return filePath
+    }
+}
+
 
 module.exports = reducer
