@@ -7,7 +7,43 @@ const numberOfFiles = files.length
 var workerToFiles={}
 var reducerWorkerToFilesSorting={}
 var reducerWorkerToFiles={}
+let taskID=1;
 const ports=[WORKER1_PORT,WORKER2_PORT,WORKER3_PORT,WORKER4_PORT,WORKER5_PORT]
+
+class TaskQueue
+{
+    constructor()
+    {
+        this.items = [];
+    }
+    enqueue(element)
+    {    
+        this.items.push(element);
+    }   
+    dequeue()
+    {
+        if(this.isEmpty())
+            return -1;
+        return this.items.shift();
+    }              
+    front()
+    {
+        if(this.isEmpty())
+            return -1;
+        return this.items[0];
+    }
+    isEmpty()
+    {
+        return this.items.length === 0;
+    }
+}
+
+var taskQueue=new TaskQueue();
+//{
+// taskID, taskType,data,assignedTo 
+//}
+
+
 const assignFilesToWorkers=(ports)=>{
     let numberOfWorkers;
     if(ports.length < 3)
@@ -24,6 +60,19 @@ const assignFilesToWorkers=(ports)=>{
         i+=numberOfFilesPerWorker
     })
 }
+
+const getMappingPorts=(freePorts)=>{
+    let numberOfWorkers;
+    if(ports.length < 3)
+        numberOfWorkers=ports.length
+    else 
+        numberOfWorkers = 3
+    const shuffled = ports.sort(() => 0.5 - Math.random());
+    const mappingWorkers=shuffled.slice(0,numberOfWorkers)
+    return mappingWorkers
+}
+
+
 
 const sendRequests=async(ports)=>{
     
@@ -42,7 +91,6 @@ const assignReducerWorkersToFiles=(reducerWorkers,files,reducerWorkerToFileMappi
     const numberOfReducerWorkers=reducerWorkers.length
     const numberOfFiles=files.length
     const numberOfFilesPerReducerWorker=Math.ceil(numberOfFiles / numberOfReducerWorkers)
-    console.log(numberOfFilesPerReducerWorker)
     let i=0;
     reducerWorkers.forEach((reducerWorker)=>{
         const filesForWorker=files.slice(i,i + numberOfFilesPerReducerWorker)
@@ -57,32 +105,106 @@ router.get("/get-data",async(req,res)=>{
    
     
     const freePorts=await sendRequests(ports)
-    assignFilesToWorkers(freePorts)
-    const mappingWorkerPorts=Object.keys(workerToFiles)
-    const filePathsFromMapperUnFlattened=await Promise.all(mappingWorkerPorts.map(async(port)=>{
-        const requestURL=`http://localhost:${port}/worker/mapping`
-        const JSONObject={"data":workerToFiles[port]}
-        const {data} = await axios.post(requestURL,JSONObject)
-        return data.data
-        
+    const mappingWorkerPorts=getMappingPorts(freePorts)
+    let filePathsFromMapperUnFlattened =[];
+    let filePathsSortedFilesUnFlattened=[];
+    files.forEach((file)=>{
+        data={
+            taskID,
+            file,
+            taskType:"MAP",
+            assignedTo:""
+        }
+        taskQueue.enqueue(data)
+        taskID++;
     })
-    )
-    const filePathsFromMapper=filePathsFromMapperUnFlattened.flat(1)
+    while(!taskQueue.isEmpty())
+    {
+        let mappingTasks=[]
+        mappingWorkerPorts.forEach((worker)=>{
+            if(!taskQueue.isEmpty())
+            {
+                let task=taskQueue.front();
+                taskQueue.dequeue()
+                task.assignedTo=worker
+                const requestURL=`http://localhost:${worker}/worker/mapping`
+                const JSONObject={"data":task}
+                mappingTasks.push(axios.post(requestURL,JSONObject))
+            }
+                
+            
+        })
+        const x=await Promise.all(mappingTasks)
+        filePathsFromMapperUnFlattened.push(...x)
+
+
+     }
+    const filePathsFromMapper=filePathsFromMapperUnFlattened.map(({data})=>data.data)
     const otherWorkers=ports.filter((port)=> !mappingWorkerPorts.includes(port))
-    assignReducerWorkersToFiles(otherWorkers,filePathsFromMapper,reducerWorkerToFilesSorting)
-    let filePathsSortedFilesUnFlattened=await Promise.all(otherWorkers.map(async(workerPort)=>{
-        const filesToBeSentToReducerSorting={"data":reducerWorkerToFilesSorting[workerPort]}
-        return axios.post(`http://localhost:${workerPort}/worker/sorter`,filesToBeSentToReducerSorting)
-    }))
-    filePathsSortedFilesUnFlattened=filePathsSortedFilesUnFlattened.map(({data})=>data.data)
-    const filePathsSortedFilesWithDuplicates=filePathsSortedFilesUnFlattened.flat(1)
+    filePathsFromMapper.forEach((file)=>{
+        data={
+            taskID,
+            file,
+            taskType:"SORTING",
+            assignedTo:""
+        }
+        taskQueue.enqueue(data)
+        taskID++;
+    })
+    while(!taskQueue.isEmpty())
+    {
+        let sortingTasks=[]
+        otherWorkers.forEach((worker)=>{
+            if(!taskQueue.isEmpty())
+            {
+                let task=taskQueue.front();
+                taskQueue.dequeue()
+                task.assignedTo=worker
+                const requestURL=`http://localhost:${worker}/worker/sorter`
+                const JSONObject={"data":task}
+                sortingTasks.push(axios.post(requestURL,JSONObject))
+            }
+                
+            
+        })
+        const x=await Promise.all(sortingTasks)
+        filePathsSortedFilesUnFlattened.push(...x)
+
+
+    }
+    
+
+    const filePathsSortedFilesWithDuplicates=filePathsSortedFilesUnFlattened.map(({data}) => data.data).flat(1)
     const filePathsSortedFiles=[... new Set(filePathsSortedFilesWithDuplicates)]
-    assignReducerWorkersToFiles(otherWorkers,filePathsSortedFiles,reducerWorkerToFiles)
-    await Promise.all(otherWorkers.map(async(worker)=>{
-        const filesToBeSentToReducer={"data":reducerWorkerToFiles[worker]}
-        const {data}=await axios.post(`http://localhost:${worker}/worker/reducer`,filesToBeSentToReducer)
-        return data.data
-    }))
+    filePathsSortedFiles.forEach((file)=>{
+        data={
+            taskID,
+            file,
+            taskType:"REDUCE",
+            assignedTo:""
+        }
+        taskQueue.enqueue(data)
+        taskID++;
+    })
+    while(!taskQueue.isEmpty())
+    {
+        let reduceTasks=[]
+        otherWorkers.forEach((worker)=>{
+            if(!taskQueue.isEmpty())
+            {
+                let task=taskQueue.front();
+                taskQueue.dequeue()
+                task.assignedTo=worker
+                const requestURL=`http://localhost:${worker}/worker/reducer`
+                const JSONObject={"data":task}
+                reduceTasks.push(axios.post(requestURL,JSONObject))
+            }
+                
+            
+        })
+        await Promise.all(reduceTasks)
+
+    }
     res.status(200).json({"data":"it's done"})
     
 })

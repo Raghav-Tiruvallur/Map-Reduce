@@ -10,20 +10,18 @@ router.get("/are-you-free",(req,res)=>{
 
 router.post("/mapping",(req,res)=>{
     try{
-        const files=req.body.data
+        const fileData=req.body.data
+        const file=fileData.file
+        console.log(`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`)
         const directorySplit=__dirname.split("/")
         directorySplit[directorySplit.length - 1]="files"
         let path=""
         directorySplit.forEach((dirPath)=>{
             path+=dirPath + "/"
         })
-        let filePaths=[]
-        files.forEach((file)=>{
-            const pathFile=path + file 
-            const filePath=mapper(pathFile)
-            filePaths.push(filePath)
-        })
-        res.status(200).json({"data":filePaths})
+        const pathFile=path + file 
+        const filePath=mapper(pathFile)
+        res.status(200).json({"data":filePath})
     }
     catch(e){
         res.status(500).json({"data":e})
@@ -36,27 +34,37 @@ router.get("/heartbeat",(req,res)=>{
 })
 
 router.post("/sorter",(req,res)=>{
-    const files=req.body.data
-    let fileNames=[]
-    files.forEach((file)=>{
+
+    try{
+        const fileData=req.body.data
+        const file=fileData.file
+        console.log(`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`)
+        let fileNames=[]
         const fileName=combiner(file)
         fileNames=[...new Set([...fileName ,...fileNames])] 
-    })
-    console.log(fileNames.length)
-    res.status(200).json({"data":fileNames})
+        res.status(200).json({"data":fileNames})
+    }
+    catch(e)
+    {
+        res.status(500).json({"data":e})
+    }
 })
-
 
 
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 router.post("/reducer",async(req,res)=>{
-    const files=req.body.data
-    files.forEach((file)=>{
+    try{
+        const fileData=req.body.data
+        const file=fileData.file
+        console.log(`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`)
         reducer(file)
-    })
-    res.status(200).json({"data":"reducing done"})
-    
+        res.status(200).json({"data":"reducing done"})
+    }
+    catch(e)
+    {
+        res.status(500).json({"data":e})
+    }
 })
 
 

@@ -3,6 +3,7 @@
     "axios": "^1.1.2",
     "cors": "^2.8.5",
     "express": "^4.18.2",
+    "express-fileupload": "^1.4.0",
     "fs-extra": "^10.1.0",
     "node-cron": "^3.0.2",
     "split-file": "^2.3.0"

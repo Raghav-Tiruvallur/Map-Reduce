@@ -1,16 +1,16 @@
 const splitFile = require('split-file');
 const fs=require('fs-extra')
 
-const splitFilesIntoParts=(chunkSize)=>{
-    splitFile.splitFileBySize(__dirname + '/data.txt', chunkSize)
+const splitFilesIntoParts=(fileName,chunkSize)=>{
+    splitFile.splitFileBySize(__dirname + "/" + fileName, chunkSize)
   .then((names) => {
     console.log(`Files split into ${names.length} parts of ${chunkSize} bytes each`);
     names.map((name)=>{
         const nameArray=name.split("/")
-        const fileName=__dirname + "/files/" + nameArray[nameArray.length -1]
-        fs.move(name, fileName, function (err) {
+        const file=__dirname + "/files/" + nameArray[nameArray.length -1] + ".txt"
+        console.log(file)
+        fs.move(name, file, function (err) {
             if (err) return console.error(err)
-            console.log("success!")
            })
     })
   })
@@ -19,10 +19,10 @@ const splitFilesIntoParts=(chunkSize)=>{
   });
 }
 
-const main=()=>{
+const main=(fileName)=>{
 
-    const chunkSize=1024
-   splitFilesIntoParts(chunkSize)
+    const chunkSize=10*1024
+    splitFilesIntoParts(fileName,chunkSize)
 
 }
-main()
+module.exports=main

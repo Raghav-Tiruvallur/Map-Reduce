@@ -28,7 +28,7 @@ const writeToFile = (keyValuePair) => {
             fs.appendFileSync(filePath, keyValuePair.toString()+"\n")
         }
         catch (err){
-            console.log("Error while writing to file"+{filePath})
+            console.log(`Error while writing to file ${filePath} on key ${key}`)
             throw err
         }
 
@@ -45,7 +45,7 @@ const writeToFile = (keyValuePair) => {
             fs.appendFileSync(filePath, keyValuePair.toString()+"\n")
         }
         catch (err){
-            console.log("Error while writing to file"+{filePath})
+            console.log(`Error while writing to file ${filePath} on word ${key}`)
             throw err
         }
 
