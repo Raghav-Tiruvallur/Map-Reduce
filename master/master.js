@@ -100,6 +100,19 @@ const assignReducerWorkersToFiles=(reducerWorkers,files,reducerWorkerToFileMappi
 }
 
 
+router.get("/get-workers",(req,res)=>{
+    res.status(200).json({"data":ports})
+})
+
+router.get("/logs",async(req,res)=>{
+    let logData=[]
+    ports.map((port)=>{
+        logData.push(axios.get(`http://localhost:${port}/worker/get-logs`))
+    })
+    let logs=await Promise.all(logData)
+    logs=logs.map(({data})=>data.data)
+    res.status(200).json({"data":logs})
+})
 
 router.get("/get-data",async(req,res)=>{
    
@@ -109,7 +122,7 @@ router.get("/get-data",async(req,res)=>{
     let filePathsFromMapperUnFlattened =[];
     let filePathsSortedFilesUnFlattened=[];
     files.forEach((file)=>{
-        data={
+        const data={
             taskID,
             file,
             taskType:"MAP",
@@ -142,7 +155,7 @@ router.get("/get-data",async(req,res)=>{
     const filePathsFromMapper=filePathsFromMapperUnFlattened.map(({data})=>data.data)
     const otherWorkers=ports.filter((port)=> !mappingWorkerPorts.includes(port))
     filePathsFromMapper.forEach((file)=>{
-        data={
+        const data={
             taskID,
             file,
             taskType:"SORTING",
@@ -177,7 +190,7 @@ router.get("/get-data",async(req,res)=>{
     const filePathsSortedFilesWithDuplicates=filePathsSortedFilesUnFlattened.map(({data}) => data.data).flat(1)
     const filePathsSortedFiles=[... new Set(filePathsSortedFilesWithDuplicates)]
     filePathsSortedFiles.forEach((file)=>{
-        data={
+        const data={
             taskID,
             file,
             taskType:"REDUCE",
@@ -203,8 +216,18 @@ router.get("/get-data",async(req,res)=>{
             
         })
         await Promise.all(reduceTasks)
-
+        
+        
     }
+    // let logs=[]
+    // freePorts.map((port)=>{
+    //     logs.push(axios.get(`http://localhost:${port}/worker/get-logs`))
+    // })
+    // const logData=await Promise.all(logs)
+    // let totalLogs=[]
+    // logData.map(({data})=>totalLogs.push(...Object.values(data)))
+    // totalLogs=totalLogs.map((log)=>Object.values(log)[0])
+    // console.log(totalLogs)
     res.status(200).json({"data":"it's done"})
     
 })

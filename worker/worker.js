@@ -8,11 +8,22 @@ router.get("/are-you-free",(req,res)=>{
     res.status(200).json({"data":"free"})
 })
 
+var workerLogs={}
+
 router.post("/mapping",(req,res)=>{
     try{
         const fileData=req.body.data
         const file=fileData.file
         console.log(`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`)
+        if(workerLogs[fileData.assignedTo])
+        {
+            workerLogs[fileData.assignedTo].push(`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`)
+        }
+        else 
+        {
+            workerLogs[fileData.assignedTo]=[`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`]
+        }
+       // console.log(workerLogs)
         const directorySplit=__dirname.split("/")
         directorySplit[directorySplit.length - 1]="files"
         let path=""
@@ -39,6 +50,14 @@ router.post("/sorter",(req,res)=>{
         const fileData=req.body.data
         const file=fileData.file
         console.log(`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`)
+        if(workerLogs[fileData.assignedTo])
+        {
+            workerLogs[fileData.assignedTo].push(`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`)
+        }
+        else 
+        {
+            workerLogs[fileData.assignedTo]=[`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`]
+        }
         let fileNames=[]
         const fileName=combiner(file)
         fileNames=[...new Set([...fileName ,...fileNames])] 
@@ -51,6 +70,11 @@ router.post("/sorter",(req,res)=>{
 })
 
 
+router.get("/get-logs",(req,res)=>{
+    res.status(200).json({"data":Object.values(workerLogs)[0]})
+})
+
+
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 router.post("/reducer",async(req,res)=>{
@@ -58,6 +82,14 @@ router.post("/reducer",async(req,res)=>{
         const fileData=req.body.data
         const file=fileData.file
         console.log(`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`)
+        if(workerLogs[fileData.assignedTo])
+        {
+            workerLogs[fileData.assignedTo].push(`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`)
+        }
+        else 
+        {
+            workerLogs[fileData.assignedTo]=[`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`]
+        }
         reducer(file)
         res.status(200).json({"data":"reducing done"})
     }

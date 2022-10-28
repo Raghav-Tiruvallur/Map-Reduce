@@ -21,7 +21,7 @@ const splitFilesIntoParts=(fileName,chunkSize)=>{
 
 const main=(fileName)=>{
 
-    const chunkSize=10*1024
+    const chunkSize=50*1024
     splitFilesIntoParts(fileName,chunkSize)
 
 }
