@@ -6,17 +6,24 @@ const fs = require('fs')
 const reducer = (filePaths) => {
 
     keyValue = readFromFile(filePaths)
-    
-    let wordCount = 0
-    let key = keyValue[0].split(",")[0]
+
+    let keyStore = {}
 
     for(let i=0; i<keyValue.length-1; i++){
-        value = parseInt(keyValue[i].split(",")[1])
-        wordCount+=value
+        let key = keyValue[0].split(",")[0]
+        let value = parseInt(keyValue[i].split(",")[1])
+
+        if(keyStore[key]){
+            keyStore[key]+=value
+        }
+        else{
+            keyStore[key] = value
+        }
     }
     
-    data=`${key},${wordCount}`
+    let data =  JSON.stringify(keyStore)
     writeToFile(data)
+    return data
 }
 
 //read content of the file
