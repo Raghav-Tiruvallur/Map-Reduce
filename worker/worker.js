@@ -14,7 +14,7 @@ router.post("/mapping",(req,res)=>{
     try{
         const fileData=req.body.data
         const file=fileData.file
-        console.log(`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`)
+        //console.log(`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`)
         if(workerLogs[fileData.assignedTo])
         {
             workerLogs[fileData.assignedTo].push(`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`)
@@ -32,7 +32,11 @@ router.post("/mapping",(req,res)=>{
         })
         const pathFile=path + file 
         const filePath=mapper(pathFile)
-        res.status(200).json({"data":filePath})
+        let fileNames=[]
+        const fileName=combiner(filePath)
+        fileNames=[...new Set([...fileName ,...fileNames])] 
+        res.status(200).json({"data":fileNames})
+        //res.status(200).json({"data":filePath})
     }
     catch(e){
         res.status(500).json({"data":e})
@@ -49,7 +53,7 @@ router.post("/sorter",(req,res)=>{
     try{
         const fileData=req.body.data
         const file=fileData.file
-        console.log(`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`)
+        //console.log(`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`)
         if(workerLogs[fileData.assignedTo])
         {
             workerLogs[fileData.assignedTo].push(`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`)
@@ -81,7 +85,6 @@ router.post("/reducer",async(req,res)=>{
     try{
         const fileData=req.body.data
         const file=fileData.file
-        console.log(`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`)
         if(workerLogs[fileData.assignedTo])
         {
             workerLogs[fileData.assignedTo].push(`Working on taskID:${fileData.taskID} of task type:${fileData.taskType} and operating on file:${file}`)

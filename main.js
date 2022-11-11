@@ -1,6 +1,6 @@
 const splitFile = require('split-file');
 const fs=require('fs-extra')
-
+const f=require('fs')
 const splitFilesIntoParts=(fileName,chunkSize)=>{
     splitFile.splitFileBySize(__dirname + "/" + fileName, chunkSize)
   .then((names) => {
@@ -21,7 +21,9 @@ const splitFilesIntoParts=(fileName,chunkSize)=>{
 
 const main=(fileName)=>{
 
-    const chunkSize=50*1024
+    var stats = f.statSync(__dirname + "/" + fileName)
+    var fileSizeInBytes = stats.size;
+    const chunkSize=fileSizeInBytes / 5;
     splitFilesIntoParts(fileName,chunkSize)
 
 }

@@ -18,12 +18,18 @@ const writeToFile = (keyValuePair) => {
     
     let key = keyValuePair[0]
     let value = keyValuePair[1]
-
+    let hashedValue=0
+    for(let i=0;i < key.length;i++)
+    {
+        hashedValue+=key.codePointAt(i)
+    }
+    hashedValue%=5;
     if(process.platform === "win32"){
         dirName = __dirname.split('\\')
         dirName.pop()
 
-        const filePath = dirName.join("\\") + "\\sortedFiles\\"+ key +".txt"
+        const filePath = dirName.join("\\") + "\\sortedFiles\\"+ hashedValue +".txt"
+        console.log(filePath)
         try{
             fs.appendFileSync(filePath, keyValuePair.toString()+"\n")
         }
@@ -40,7 +46,8 @@ const writeToFile = (keyValuePair) => {
         dirName.pop()
         //fileName = file.split('/').pop()
         
-        const filePath = dirName.join("/") + "/sortedFiles/"+ key +".txt" 
+        const filePath = dirName.join("/") + "/sortedFiles/"+ hashedValue +".txt" 
+        //console.log(filePath)
         try{
             fs.appendFileSync(filePath, keyValuePair.toString()+"\n")
         }

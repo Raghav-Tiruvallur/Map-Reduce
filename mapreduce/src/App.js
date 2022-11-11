@@ -12,6 +12,7 @@ function App() {
   const [items,setItems]=useState([])
   const [upLoading,setupLoading]=useState(false)
   const [submit,setSubmit]=useState(false)
+  const [timeTaken,setTimeTaken]=useState("")
   const navigate=useNavigate()
   const uploadFile=async(e)=>{
     e.preventDefault()
@@ -29,9 +30,9 @@ function App() {
       setSubmit(true)
       const {data}=await axios.get("http://localhost:4000/client/get-frequency")
       setItems(items=>[...items,...data.data])
+      console.log(data.time)
+      setTimeTaken(data.time)
       setSubmit(false)
-      console.log(data)
-      console.log(data.logs)
       setGlobalState("logs",data.logs)
   }
 
@@ -45,6 +46,8 @@ function App() {
     {submit?<LoadingButton text="Generating your solution..."/>:(<button type='submit' className='btn btn-primary' onClick={getFrequencies}>Get Frequencies</button>)}
     &emsp;
     <button type='submit' className='btn btn-primary' onClick={()=>navigate("/logs")}>View Logs</button>
+    <br/>
+    <h3>Time taken:{timeTaken} s</h3>
     <h2>Word Frequency</h2>
     {
       <FrequencyTable items={items}/>

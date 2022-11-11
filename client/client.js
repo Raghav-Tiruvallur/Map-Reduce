@@ -18,7 +18,11 @@ router.post("/upload-data",async(req,res)=>{
     
 
 router.get("/get-frequency",async(req,res)=>{
+    let time=new Date().getTime();
     const {data}=await axios.get(`http://localhost:${MASTER_PORT}/master/get-data`)
+    time=new Date().getTime() - time;
+    time/=1000
+    time=time.toString()
     const reducedData=fs.readFileSync("../reduced/reduced.txt").toString().split("\n")
     if(reducedData[reducedData.length -1] == '')
     {
@@ -32,7 +36,7 @@ router.get("/get-frequency",async(req,res)=>{
         const obj={idx,word,frequency}
         tableData.push(obj)
     })
-    res.status(200).json({"data":tableData,"logs":data})
+    res.status(200).json({"data":tableData,"logs":data,"time":time})
 })
 
 

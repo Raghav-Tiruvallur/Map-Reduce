@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const axios=require('axios')
-const {WORKER1_PORT,WORKER2_PORT,WORKER3_PORT,WORKER4_PORT,WORKER5_PORT}=require('../utils/utils')
+const {WORKER1_PORT,WORKER2_PORT,WORKER3_PORT,WORKER4_PORT,WORKER5_PORT, WORKER6_PORT, WORKER7_PORT, WORKER8_PORT, WORKER9_PORT, WORKER10_PORT}=require('../utils/utils')
 const fs = require('fs')
 const files=fs.readdirSync('../files')
 const numberOfFiles = files.length
@@ -8,7 +8,7 @@ var workerToFiles={}
 var reducerWorkerToFilesSorting={}
 var reducerWorkerToFiles={}
 let taskID=1;
-const ports=[WORKER1_PORT,WORKER2_PORT,WORKER3_PORT,WORKER4_PORT,WORKER5_PORT]
+const ports=[WORKER1_PORT,WORKER2_PORT,WORKER3_PORT,WORKER4_PORT,WORKER5_PORT,WORKER6_PORT,WORKER7_PORT,WORKER8_PORT,WORKER9_PORT,WORKER10_PORT]
 
 class TaskQueue
 {
@@ -63,10 +63,10 @@ const assignFilesToWorkers=(ports)=>{
 
 const getMappingPorts=(freePorts)=>{
     let numberOfWorkers;
-    if(ports.length < 3)
+    if(ports.length < 5)
         numberOfWorkers=ports.length
     else 
-        numberOfWorkers = 3
+        numberOfWorkers = 5
     const shuffled = ports.sort(() => 0.5 - Math.random());
     const mappingWorkers=shuffled.slice(0,numberOfWorkers)
     return mappingWorkers
@@ -119,6 +119,7 @@ router.get("/get-data",async(req,res)=>{
     
     const freePorts=await sendRequests(ports)
     const mappingWorkerPorts=getMappingPorts(freePorts)
+    console.log(mappingWorkerPorts)
     let filePathsFromMapperUnFlattened =[];
     let filePathsSortedFilesUnFlattened=[];
     files.forEach((file)=>{
@@ -131,6 +132,7 @@ router.get("/get-data",async(req,res)=>{
         taskQueue.enqueue(data)
         taskID++;
     })
+    let time=new Date()
     while(!taskQueue.isEmpty())
     {
         let mappingTasks=[]
@@ -152,44 +154,54 @@ router.get("/get-data",async(req,res)=>{
 
 
      }
+     time=new Date() - time 
+     time/=1000
+     console.log("Mapping takes: ",time)
     const filePathsFromMapper=filePathsFromMapperUnFlattened.map(({data})=>data.data)
-    const otherWorkers=ports.filter((port)=> !mappingWorkerPorts.includes(port))
+    let filePathsFromMapperFlattened=[]
     filePathsFromMapper.forEach((file)=>{
-        const data={
-            taskID,
-            file,
-            taskType:"SORTING",
-            assignedTo:""
-        }
-        taskQueue.enqueue(data)
-        taskID++;
+        //filePathsFromMapperFlattened=[...new Set([...filePathsFromMapperFlattened,file])]
+        filePathsFromMapperFlattened=[...filePathsFromMapperFlattened,...file]
     })
-    while(!taskQueue.isEmpty())
-    {
-        let sortingTasks=[]
-        otherWorkers.forEach((worker)=>{
-            if(!taskQueue.isEmpty())
-            {
-                let task=taskQueue.front();
-                taskQueue.dequeue()
-                task.assignedTo=worker
-                const requestURL=`http://localhost:${worker}/worker/sorter`
-                const JSONObject={"data":task}
-                sortingTasks.push(axios.post(requestURL,JSONObject))
-            }
+    filePathsFromMapperFlattened=[...new Set(filePathsFromMapperFlattened)]
+    const otherWorkers=ports.filter(port=>!mappingWorkerPorts.includes(port))
+    // filePathsFromMapper.forEach((file)=>{
+    //     const data={
+    //         taskID,
+    //         file,
+    //         taskType:"SORTING",
+    //         assignedTo:""
+    //     }
+    //     taskQueue.enqueue(data)
+    //     taskID++;
+    // })
+    // console.log(otherWorkers)
+    // while(!taskQueue.isEmpty())
+    // {
+    //     let sortingTasks=[]
+    //     otherWorkers.forEach((worker)=>{
+    //         if(!taskQueue.isEmpty())
+    //         {
+    //             let task=taskQueue.front();
+    //             taskQueue.dequeue()
+    //             task.assignedTo=worker
+    //             const requestURL=`http://localhost:${worker}/worker/sorter`
+    //             const JSONObject={"data":task}
+    //             sortingTasks.push(axios.post(requestURL,JSONObject))
+    //         }
                 
             
-        })
-        const x=await Promise.all(sortingTasks)
-        filePathsSortedFilesUnFlattened.push(...x)
+    //     })
+    //     const x=await Promise.all(sortingTasks)
+    //     filePathsSortedFilesUnFlattened.push(...x)
 
 
-    }
+    // }
     
 
-    const filePathsSortedFilesWithDuplicates=filePathsSortedFilesUnFlattened.map(({data}) => data.data).flat(1)
-    const filePathsSortedFiles=[... new Set(filePathsSortedFilesWithDuplicates)]
-    filePathsSortedFiles.forEach((file)=>{
+    // const filePathsSortedFilesWithDuplicates=filePathsSortedFilesUnFlattened.map(({data}) => data.data).flat(1)
+    // const filePathsSortedFiles=[... new Set(filePathsSortedFilesWithDuplicates)]
+    filePathsFromMapperFlattened.forEach((file)=>{
         const data={
             taskID,
             file,
@@ -215,10 +227,9 @@ router.get("/get-data",async(req,res)=>{
                 
             
         })
-        await Promise.all(reduceTasks)
-        
-        
+        await Promise.all(reduceTasks) 
     }
+
     // let logs=[]
     // freePorts.map((port)=>{
     //     logs.push(axios.get(`http://localhost:${port}/worker/get-logs`))
@@ -227,7 +238,6 @@ router.get("/get-data",async(req,res)=>{
     // let totalLogs=[]
     // logData.map(({data})=>totalLogs.push(...Object.values(data)))
     // totalLogs=totalLogs.map((log)=>Object.values(log)[0])
-    // console.log(totalLogs)
     res.status(200).json({"data":"it's done"})
     
 })

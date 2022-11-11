@@ -6,16 +6,25 @@ const fs = require('fs')
 const reducer = (filePaths) => {
 
     keyValue = readFromFile(filePaths)
-    
+    keyValue.pop()
     let wordCount = 0
-    let key = keyValue[0].split(",")[0]
-
-    for(let i=0; i<keyValue.length-1; i++){
-        value = parseInt(keyValue[i].split(",")[1])
-        wordCount+=value
+    var freq={}
+    for(let i=0; i<keyValue.length; i++){
+        let key = keyValue[i].split(",")[0]
+        let value = parseInt(keyValue[i].split(",")[1])
+        if(freq[key])
+            freq[key]+=value
+        else 
+            freq[key]=value
     }
-    
-    data=`${key},${wordCount}`
+    const words=Object.keys(freq)
+    let data=""
+    words.forEach((word,idx)=>{
+        const frequency=freq[word]
+        data+=`${word},${frequency}`
+        if(idx!=words.length -1)
+            data+='\n'
+    })
     writeToFile(data)
 }
 
@@ -52,14 +61,17 @@ const readFromFile = (filePath) =>{
 } 
 
 const writeToFile = (keyValuePair) => {
-    
+
+
+    const data=keyValuePair.split("\n")
+    data.forEach((key)=>{
     if(process.platform === "win32"){
         dirName = __dirname.split('\\')
         dirName.pop()
 
         const filePath = dirName.join("\\") + "\\reduced\\reduced.txt"
         try{
-            fs.appendFileSync(filePath, keyValuePair.toString()+"\n")
+            fs.appendFileSync(filePath, key.toString()+"\n")
         }
         catch (err){
             console.log("Error while writing to file"+{filePath})
@@ -76,7 +88,7 @@ const writeToFile = (keyValuePair) => {
         
         const filePath = dirName.join("/") + "/reduced/reduced.txt" 
         try{
-            fs.appendFileSync(filePath, keyValuePair.toString()+"\n")
+            fs.appendFileSync(filePath, key.toString()+"\n")
         }
         catch (err){
             console.log("Error while writing to file"+{filePath})
@@ -85,6 +97,7 @@ const writeToFile = (keyValuePair) => {
 
         return filePath
     }
+})
 }
 
 

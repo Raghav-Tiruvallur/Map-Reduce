@@ -80,6 +80,11 @@ export default function Logs() {
         <Tab label="Worker 3" {...a11yProps(2)} />
         <Tab label="Worker 4" {...a11yProps(3)} />
         <Tab label="Worker 5" {...a11yProps(4)} />
+        <Tab label="Worker 6" {...a11yProps(5)} />
+        <Tab label="Worker 7" {...a11yProps(6)} />
+        <Tab label="Worker 8" {...a11yProps(7)} />
+        <Tab label="Worker 9" {...a11yProps(8)} />
+        <Tab label="Worker 10" {...a11yProps(9)} />
       </Tabs>
       {
             items.map((item,idx)=>{
