@@ -6,26 +6,24 @@ const fs = require('fs')
 const reducer = (filePaths) => {
 
     keyValue = readFromFile(filePaths)
-    keyValue.pop()
-    let wordCount = 0
-    var freq={}
-    for(let i=0; i<keyValue.length; i++){
-        let key = keyValue[i].split(",")[0]
+
+    let keyStore = {}
+
+    for(let i=0; i<keyValue.length-1; i++){
+        let key = keyValue[0].split(",")[0]
         let value = parseInt(keyValue[i].split(",")[1])
-        if(freq[key])
-            freq[key]+=value
-        else 
-            freq[key]=value
+
+        if(keyStore[key]){
+            keyStore[key]+=value
+        }
+        else{
+            keyStore[key] = value
+        }
     }
-    const words=Object.keys(freq)
-    let data=""
-    words.forEach((word,idx)=>{
-        const frequency=freq[word]
-        data+=`${word},${frequency}`
-        if(idx!=words.length -1)
-            data+='\n'
-    })
+    
+    let data =  JSON.stringify(keyStore)
     writeToFile(data)
+    return data
 }
 
 //read content of the file
