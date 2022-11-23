@@ -6,11 +6,13 @@ const fs = require('fs')
 const reducer = (filePaths) => {
 
     keyValue = readFromFile(filePaths)
+
     let keyStore = {}
 
     for(let i=0; i<keyValue.length-1; i++){
-        let key = keyValue[i].split(",")[0]
+        let key = keyValue[0].split(",")[0]
         let value = parseInt(keyValue[i].split(",")[1])
+
         if(keyStore[key]){
             keyStore[key]+=value
         }
@@ -18,12 +20,8 @@ const reducer = (filePaths) => {
             keyStore[key] = value
         }
     }
-    const keys=Object.keys(keyStore)
-    let data=""
-    keys.forEach((key)=>{
-        data+=`${key},${keyStore[key]}\n`
-    })
-
+    
+    let data =  JSON.stringify(keyStore)
     writeToFile(data)
     return data
 }
