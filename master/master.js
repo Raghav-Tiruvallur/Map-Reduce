@@ -180,7 +180,7 @@ router.get("/get-data",async(req,res)=>{
     filePathsFromMapperFlattened.forEach((file)=>{
         const data={
             taskID,
-            file,
+            file, 
             taskType:"REDUCE",
             assignedTo:""
         }
