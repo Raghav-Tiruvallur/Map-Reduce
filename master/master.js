@@ -39,9 +39,6 @@ class TaskQueue
 }
 
 var taskQueue=new TaskQueue();
-//{
-// taskID, taskType,data,assignedTo 
-//}
 
 
 const assignFilesToWorkers=(ports)=>{
@@ -117,7 +114,7 @@ router.get("/logs",async(req,res)=>{
 router.get("/get-data",async(req,res)=>{
    
     
-    const freePorts=await sendRequests(ports)
+    const freePorts=ports
     const mappingWorkerPorts=getMappingPorts(freePorts)
     console.log(mappingWorkerPorts)
     let filePathsFromMapperUnFlattened =[];
@@ -136,7 +133,8 @@ router.get("/get-data",async(req,res)=>{
     while(!taskQueue.isEmpty())
     {
         let mappingTasks=[]
-        mappingWorkerPorts.forEach((worker)=>{
+        let tasks={}
+        mappingWorkerPorts.forEach((worker,index)=>{
             if(!taskQueue.isEmpty())
             {
                 let task=taskQueue.front();
@@ -144,12 +142,21 @@ router.get("/get-data",async(req,res)=>{
                 task.assignedTo=worker
                 const requestURL=`http://localhost:${worker}/worker/mapping`
                 const JSONObject={"data":task}
+                tasks[index]=task
                 mappingTasks.push(axios.post(requestURL,JSONObject))
-            }
+            } 
                 
             
         })
-        const x=await Promise.all(mappingTasks)
+        let x=await Promise.allSettled(mappingTasks)
+        x.forEach((obj,index)=>{
+            if(obj.status === "rejected")
+            {
+                taskQueue.enqueue(tasks[index])
+                console.log(tasks[index])
+            }
+        })
+        x=x.map(({value})=>value)
         filePathsFromMapperUnFlattened.push(...x)
 
 
@@ -157,50 +164,19 @@ router.get("/get-data",async(req,res)=>{
      time=new Date() - time 
      time/=1000
      console.log("Mapping takes: ",time)
-    const filePathsFromMapper=filePathsFromMapperUnFlattened.map(({data})=>data.data)
+    let filePathsFromMapper=[]
+    filePathsFromMapperUnFlattened.forEach((obj)=>{
+        if(obj!==undefined)
+            filePathsFromMapper.push(obj.data.data)
+    })
+   
     let filePathsFromMapperFlattened=[]
     filePathsFromMapper.forEach((file)=>{
-        //filePathsFromMapperFlattened=[...new Set([...filePathsFromMapperFlattened,file])]
+
         filePathsFromMapperFlattened=[...filePathsFromMapperFlattened,...file]
     })
     filePathsFromMapperFlattened=[...new Set(filePathsFromMapperFlattened)]
     const otherWorkers=ports.filter(port=>!mappingWorkerPorts.includes(port))
-    // filePathsFromMapper.forEach((file)=>{
-    //     const data={
-    //         taskID,
-    //         file,
-    //         taskType:"SORTING",
-    //         assignedTo:""
-    //     }
-    //     taskQueue.enqueue(data)
-    //     taskID++;
-    // })
-    // console.log(otherWorkers)
-    // while(!taskQueue.isEmpty())
-    // {
-    //     let sortingTasks=[]
-    //     otherWorkers.forEach((worker)=>{
-    //         if(!taskQueue.isEmpty())
-    //         {
-    //             let task=taskQueue.front();
-    //             taskQueue.dequeue()
-    //             task.assignedTo=worker
-    //             const requestURL=`http://localhost:${worker}/worker/sorter`
-    //             const JSONObject={"data":task}
-    //             sortingTasks.push(axios.post(requestURL,JSONObject))
-    //         }
-                
-            
-    //     })
-    //     const x=await Promise.all(sortingTasks)
-    //     filePathsSortedFilesUnFlattened.push(...x)
-
-
-    // }
-    
-
-    // const filePathsSortedFilesWithDuplicates=filePathsSortedFilesUnFlattened.map(({data}) => data.data).flat(1)
-    // const filePathsSortedFiles=[... new Set(filePathsSortedFilesWithDuplicates)]
     filePathsFromMapperFlattened.forEach((file)=>{
         const data={
             taskID,
@@ -214,7 +190,8 @@ router.get("/get-data",async(req,res)=>{
     while(!taskQueue.isEmpty())
     {
         let reduceTasks=[]
-        otherWorkers.forEach((worker)=>{
+        let tasks={}
+        otherWorkers.forEach((worker,index)=>{
             if(!taskQueue.isEmpty())
             {
                 let task=taskQueue.front();
@@ -222,22 +199,24 @@ router.get("/get-data",async(req,res)=>{
                 task.assignedTo=worker
                 const requestURL=`http://localhost:${worker}/worker/reducer`
                 const JSONObject={"data":task}
+                tasks[index]=task
                 reduceTasks.push(axios.post(requestURL,JSONObject))
             }
                 
             
         })
-        await Promise.all(reduceTasks) 
+        let reducedX=await Promise.allSettled(reduceTasks)
+        reducedX.forEach((obj,index)=>{
+            if(obj.status === "rejected")
+            {
+                taskQueue.enqueue(tasks[index])
+                console.log(tasks[index])
+            }
+        })
+        
     }
 
-    // let logs=[]
-    // freePorts.map((port)=>{
-    //     logs.push(axios.get(`http://localhost:${port}/worker/get-logs`))
-    // })
-    // const logData=await Promise.all(logs)
-    // let totalLogs=[]
-    // logData.map(({data})=>totalLogs.push(...Object.values(data)))
-    // totalLogs=totalLogs.map((log)=>Object.values(log)[0])
+
     res.status(200).json({"data":"it's done"})
     
 })
